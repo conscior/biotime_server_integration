@@ -7,7 +7,7 @@ from odoo import _
 class HrAttendance(models.Model):
     _inherit = 'hr.attendance'
 
-    # Remove check in/out checks
+    # Remove check in/out constraints
     @api.constrains('check_in', 'check_out')
     def _check_validity_check_in_check_out(self):
         pass
