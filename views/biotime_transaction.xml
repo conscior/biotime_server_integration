@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_biotime_transaction_form" model="ir.ui.view">
+        <field name="name">biotime.transaction.form</field>
+        <field name="model">biotime.transaction</field>
+        <field name="arch" type="xml">
+            <form string="Biotime Server">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="server_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Employee details">
+                            <field name="employee_id" />
+                            <field name="employee_code" />
+                        </group>
+                        <group string="Punch details">
+                            <field name="punch_state" />
+                            <field name="verify_type" />
+                            <field name="punch_time" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_biotime_transaction_tree" model="ir.ui.view">
+        <field name="name">biotime.transaction.tree</field>
+        <field name="model">biotime.transaction</field>
+        <field name="arch" type="xml">
+            <tree string="Biotime Server">
+                <field name="server_id"/>
+                <field name="employee_id"/>
+                <field name="punch_state"/>
+                <field name="verify_type"/>
+                <field name="punch_time"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="biotime_transaction_action" model="ir.actions.act_window">
+        <field name="name">Biotime Transactions</field>
+        <field name="res_model">biotime.transaction</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="biotime_transaction_menu" parent="biotime_manager_menu"  name="Transactions" action="biotime_transaction_action" sequence="1"/>
+</odoo>

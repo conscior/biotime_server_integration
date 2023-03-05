@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_biotime_shift_form" model="ir.ui.view">
+        <field name="name">biotime.shift.form</field>
+        <field name="model">biotime.shift</field>
+        <field name="arch" type="xml">
+            <form string="Biotime Shift">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" />
+                        <h1>
+                            <field name="name" />
+                        </h1>
+                    </div>
+                    <notebook>
+                        <page name="biotime_shift_lines" string="Timetable">
+                            <field name="biotime_shift_lines">
+                                <tree editable="bottom">
+                                    <field name="day_in" />
+                                    <field name="work_from" widget="float_time" />
+                                    <field name="check_in_start" widget="float_time" />
+                                    <field name="check_in_end" widget="float_time" />
+                                    <field name="day_out" />
+                                    <field name="work_to" widget="float_time" />
+                                    <field name="check_out_start" widget="float_time" />
+                                    <field name="check_out_end" widget="float_time" />
+                                    <field name="biotime_shift_id" invisible="1" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_biotime_shift_tree" model="ir.ui.view">
+        <field name="name">biotime.shift.tree</field>
+        <field name="model">biotime.shift</field>
+        <field name="arch" type="xml">
+            <tree string="Biotime Shift">
+                <field name="name" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="biotime_shift_action" model="ir.actions.act_window">
+        <field name="name">Biotime Shifts</field>
+        <field name="res_model">biotime.shift</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="biotime_shift_menu" parent="biotime_manager_menu" name="Shifts"
+        action="biotime_shift_action" sequence="1" />
+</odoo>
