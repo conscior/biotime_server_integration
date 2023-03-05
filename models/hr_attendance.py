@@ -7,7 +7,7 @@ from odoo import _
 class HrAttendance(models.Model):
     _inherit = 'hr.attendance'
 
-    # Remove check in/out constraints
+    # Remove check in/out checks
     @api.constrains('check_in', 'check_out')
     def _check_validity_check_in_check_out(self):
         pass
@@ -19,7 +19,6 @@ class HrAttendance(models.Model):
     @api.depends('check_in', 'check_out', 'employee_id')
     def _compute_undertime(self):
         for rec in self:
-            cldr_attendance_ids = rec.employee_id.contract_id.structure_type_id.default_resource_calendar_id.attendance_ids
             employee_shift_lines = rec.employee_id.biotime_shift_id.biotime_shift_lines
             if rec.check_in and employee_shift_lines:
                 local_check_in = pytz.utc.localize(rec.check_in, is_dst=None).astimezone(
@@ -44,7 +43,6 @@ class HrAttendance(models.Model):
     @api.depends('check_in', 'check_out', 'employee_id')
     def _compute_overtime(self):
         for rec in self:
-            cldr_attendance_ids = rec.employee_id.contract_id.structure_type_id.default_resource_calendar_id.attendance_ids
             employee_shift_lines = rec.employee_id.biotime_shift_id.biotime_shift_lines
             if rec.check_out:
                 local_check_out = pytz.utc.localize(rec.check_out, is_dst=None).astimezone(
@@ -70,3 +68,4 @@ class HrAttendance(models.Model):
     undertime = fields.Float(string="Retard", compute="_compute_undertime")
     overtime = fields.Float(string='Heure(s) supplémentaire',
                             compute="_compute_overtime")
+    

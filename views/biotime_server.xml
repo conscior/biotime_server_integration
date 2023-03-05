@@ -6,11 +6,10 @@
         <field name="arch" type="xml">
             <form string="Biotime Server">
                 <header>
-                    <button name="test_connection" type="object" string="Test Connection" class="oe_highlight"
-                            icon="fa-wifi" />
-                    <button name="try_auth" type="object" string="Test Authentication" class="oe_highlight"/> 
+                    <button name="test_connection" type="object" string="Test Connection" class="oe_highlight" icon="fa-wifi" />
                     <button name="download_transactions" type="object" string="Get transactions" class="oe_highlight"/> 
                     <button name="generate_attendances" type="object" string="Generate attendances" class="oe_highlight"/> 
+                    <button name="download_generate_attendances" type="object" string="Generate Transactions and Attendances" class="oe_highlight"/> 
                     <!-- <button name="download_attendance" type="object" string="Download Data" class="oe_highlight"
                             icon="fa-download" confirm="Are you sure you want to do this?" />
                     <button name="clear_attendance" type="object" string="Clear Data" class="oe_highlight"

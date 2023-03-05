@@ -15,6 +15,7 @@ class BiotimeShift(models.Model):
          'Veuillez choisir un nom unique pour chaque shift !')
     ]
 
+
 class BiotimeShiftLine(models.Model):
     _name = 'biotime.shift.line'
 

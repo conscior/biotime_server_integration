@@ -1,5 +1,5 @@
 # Biotime Server Integration
-This module allow for the integration of a Biotime server in Odoo.
+This Odoo module allow for the integration of a Biotime server.
 
 ## Documentation
 * biotime.py : Basic python class that allows the creation of a Biotime object. This object will be initialised with the server IP adress, Port, timeout and the JWT token.
