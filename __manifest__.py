@@ -7,11 +7,14 @@
     'data': [
         'security/ir.model.access.csv',
 
+        'wizards/get_transactions.xml',
+
         'views/biotime_server.xml',
         'views/biotime_transaction.xml',
         'views/biotime_shift.xml',
         'views/hr_employee.xml',
         'views/hr_attendance.xml',
+        'views/menus.xml',
     ],
     'images': ['static/description/banner.gif'],
     'demo': [],

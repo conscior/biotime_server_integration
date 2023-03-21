@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record model="ir.ui.view" id="biotime_transaction_wizard_form">
+        <field name="name">biotime.transaction.wizard.form</field>
+        <field name="model">biotime.transaction.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <group>
+                        <field name="date_start"/>
+                        <field name="date_end"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="get_transactions" string="Download transactions" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+
+    <record id="biotime_transaction_wizard_action" model="ir.actions.act_window">
+        <field name="name">Download transactions</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">biotime.transaction.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="biotime_transaction_wizard_form"/>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

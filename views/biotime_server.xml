@@ -24,13 +24,19 @@
                         </h1>
                     </div>
                     <group>
-                        <group string="Details">
+                        <group string="Server info">
                             <field name="server_ip"/>
                             <field name="server_port"/>
                         </group>
-                        <group string="Auth">
+                        <group string="Auth info">
                             <field name="username"/>
                             <field name="password" password="True"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Details">
+                            <field name="page_size" />
+                            <field name="start_time" />
                         </group>
                     </group>
                 </sheet>
@@ -67,6 +73,5 @@
         </field>
     </record> -->
 
-    <menuitem id="biotime_manager_menu" parent="hr_attendance.menu_hr_attendance_root" sequence="50" name="Biotime Manager" />
-    <menuitem id="biotime_server_menu" parent="biotime_manager_menu"  name="Server Configuration" action="biotime_server_action" sequence="1"/>
+    
 </odoo>

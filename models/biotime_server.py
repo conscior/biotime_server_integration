@@ -2,32 +2,27 @@ from .biotime import Biotime
 from os import error
 import logging
 
-from datetime import datetime
+from datetime import datetime, date, timedelta
+
 import pytz
 
 from odoo import api, fields, models
 from odoo import _
-from odoo.exceptions import UserError, ValidationError
-_logger = logging.getLogger(__name__)
-
-
-# try:
-#     from zk import ZK
-# except ImportError:
-#     _logger.error("Please Install pyzk library.")
-
+from odoo.exceptions import UserError
 _logger = logging.getLogger(__name__)
 
 
 class BiotimeServer(models.Model):
     _name = 'biotime.server'
 
-    name = fields.Char(string="Nom du serveur",
-                       required=True, default="Serveur x")
-    server_ip = fields.Char(string='Addresse IP', required=True)
+    name = fields.Char(string="Server name",
+                       required=True, default="Server x")
+    server_ip = fields.Char(string='IP', required=True)
     server_port = fields.Char(string='Port', required=True)
-    username = fields.Char(string="Nom d'utilisateur", required=True)
-    password = fields.Char(string="Mot de passe", required=True)
+    username = fields.Char(string="Username", required=True)
+    password = fields.Char(string="Password", required=True)
+    page_size = fields.Integer('Page size', default=50)
+    start_time = fields.Datetime('Start time')
 
     _sql_constraints = [
         ('biotime_server_name_unique',
@@ -37,7 +32,7 @@ class BiotimeServer(models.Model):
 
     def test_connection(self):
         self.ensure_one()
-        biotime = Biotime(self.server_ip, self.server_port)
+        biotime = Biotime(ip=self.server_ip, port=self.server_port)
         try:
             conn = biotime.test_connection()
             if conn:
@@ -60,50 +55,50 @@ class BiotimeServer(models.Model):
         except error:
             raise UserError(_('Problème lors du test de connexion.', error))
 
-    def download_employees(self):
-        employee_obj = self.env['hr.employee']
+    # def download_employees(self):
+    #     employee_obj = self.env['hr.employee']
 
-        for server in self:
-            biotime = Biotime(server.server_ip, server.server_port)
-            server_conn = biotime.test_connection()
-            if server_conn:
-                token_res = biotime.get_jwt_token(
-                    server.username, server.password)
-                if token_res:
-                    # Biotime attendances
-                    biotime_employees = biotime.get_employees()
-                    if isinstance(biotime_employees, list):
-                        for biotime_employee in biotime_employees:
-                            # Check if employee exists in Odoo
-                            if not employee_obj.search([('biotime_code', '=', biotime_employee['emp_code'])]):
-                                employee_obj.create({
-                                    "name": biotime_employee['first_name'] if biotime_employee['first_name'] else "" + " " + biotime_employee['last_name'] if biotime_employee['last_name'] else "",
-                                    "biotime_code": biotime_employee['emp_code'],
-                                })
-                        return {
-                            'type': 'ir.actions.client',
-                            'tag': 'display_notification',
-                            'params': {
-                                'title': "Success",
-                                'message': "Employees downloaded into Odoo Successfully.",
-                                'sticky': False,
-                            }
-                        }
-                    else:
-                        raise UserError(
-                            _("Unable to retrieve biotime employees, please check the login parameters and network connections."))
-                else:
-                    raise UserError(
-                        _("Unable to retrieve jwt token, please check the login parameters and network connections."))
-            else:
-                raise UserError(
-                    _('Unable to connect, please check the parameters and network connections.'))
+    #     for server in self:
+    #         biotime = Biotime(server.server_ip, server.server_port)
+    #         server_conn = biotime.test_connection()
+    #         if server_conn:
+    #             token_res = biotime.get_jwt_token(
+    #                 server.username, server.password)
+    #             if token_res:
+    #                 # Biotime attendances
+    #                 biotime_employees = biotime.get_employees()
+    #                 if isinstance(biotime_employees, list):
+    #                     for biotime_employee in biotime_employees:
+    #                         # Check if employee exists in Odoo
+    #                         if not employee_obj.search([('biotime_code', '=', biotime_employee['emp_code'])]):
+    #                             employee_obj.create({
+    #                                 "name": biotime_employee['first_name'] if biotime_employee['first_name'] else "" + " " + biotime_employee['last_name'] if biotime_employee['last_name'] else "",
+    #                                 "biotime_code": biotime_employee['emp_code'],
+    #                             })
+    #                     return {
+    #                         'type': 'ir.actions.client',
+    #                         'tag': 'display_notification',
+    #                         'params': {
+    #                             'title': "Success",
+    #                             'message': "Employees downloaded into Odoo Successfully.",
+    #                             'sticky': False,
+    #                         }
+    #                     }
+    #                 else:
+    #                     raise UserError(
+    #                         _("Unable to retrieve biotime employees, please check the login parameters and network connections."))
+    #             else:
+    #                 raise UserError(
+    #                     _("Unable to retrieve jwt token, please check the login parameters and network connections."))
+    #         else:
+    #             raise UserError(
+    #                 _('Unable to connect, please check the parameters and network connections.'))
 
     def upload_employees(self):
         employee_obj = self.env['hr.employee']
 
         for server in self:
-            biotime = Biotime(server.server_ip, server.server_port)
+            biotime = Biotime(ip=server.server_ip, port=server.server_port)
             server_conn = biotime.test_connection()
             if server_conn:
                 token_res = biotime.get_jwt_token(
@@ -143,7 +138,53 @@ class BiotimeServer(models.Model):
                 raise UserError(
                     _('Unable to connect, please check the parameters and network connections.'))
 
-    def download_transactions(self):
+    def upload_employee(self, employee):
+        for server in self:
+            biotime = Biotime(ip=server.server_ip, port=server.server_port)
+            server_conn = biotime.test_connection()
+            if server_conn:
+                token_res = biotime.get_jwt_token(
+                    server.username, server.password)
+                if token_res:
+                    # 1 - Define request param
+                    req_params = {}
+                    if employee.biotime_code:
+                        req_params['emp_code'] = employee.biotime_code
+                    else:
+                        raise UserError(
+                            "Employee doesn't have a Biotime code.")
+                    biotime_employee = biotime.get_employees(
+                        req_params=req_params)
+                    if not biotime_employee:
+                        name_split = employee.name.split(" ")
+                        req_body = {
+                            'emp_code': employee.biotime_code,
+                            'first_name': name_split[0:-2] if len(name_split) > 2 else name_split[0],
+                            'last_name': name_split[-1] if len(name_split) > 1 else '',
+                        }
+                        biotime.create_employee(req_body)
+
+                        return {
+                            'type': 'ir.actions.client',
+                            'tag': 'display_notification',
+                            'params': {
+                                'title': "Success",
+                                'message': "Employee uploaded to Biotime Successfully.",
+                                'sticky': False,
+                            }
+                        }
+                    else:
+                        raise UserError('Employee already exist in Biotime.')
+
+                else:
+                    raise UserError(
+                        _("Unable to retrieve jwt token, please check the login parameters and network connections."))
+            else:
+                raise UserError(
+                    _('Unable to connect, please check the parameters and network connections.'))
+
+    # def download_transactions(self, req_params={'start_time': f'{date.today() - timedelta(days = 1)} 00:00:00', 'end_time': f'{date.today()} 23:59:59'}):
+    def download_transactions(self, req_params={}):
         _logger.info(
             "++++++++++++ Cron job 'download_transactions' executed ++++++++++++++++++++++")
 
@@ -151,17 +192,23 @@ class BiotimeServer(models.Model):
         employee_obj = self.env['hr.employee']
         local_tz = pytz.timezone(self.env.user.partner_id.tz or 'GMT')
 
-        biotime_transaction_obj.search([]).unlink()
+        # biotime_transaction_obj.search([]).unlink()        
 
         for server in self:
-            biotime = Biotime(server.server_ip, server.server_port)
+            # Biotime request param
+            if 'page_size' not in req_params and server.page_size:
+                req_params['page_size'] = server.page_size
+            if 'start_time' not in req_params and server.start_time:
+                req_params['start_time'] = server.start_time
+
+            biotime = Biotime(ip=server.server_ip, port=server.server_port, req_params=req_params)
             server_conn = biotime.test_connection()
             if server_conn:
                 token_res = biotime.get_jwt_token(
                     server.username, server.password)
                 if token_res:
                     # Biotime attendances
-                    transaction_list = biotime.get_transactions()
+                    transaction_list = biotime.get_transactions(req_params=req_params)
                     if isinstance(transaction_list, list):
                         for transaction in transaction_list:
                             punch_time = fields.Datetime.to_datetime(
@@ -176,17 +223,18 @@ class BiotimeServer(models.Model):
                                 utc_dt, "%Y-%m-%d %H:%M:%S")
                             punch_time = fields.Datetime.to_string(punch_time)
 
-                            employee = employee_obj.search(
-                                [('biotime_code', '=', transaction['emp_code'])])
+                            if not biotime_transaction_obj.search([('employee_code', '=', transaction['emp_code']), ('punch_time', '=', punch_time)]):
+                                employee = employee_obj.search(
+                                    [('biotime_code', '=', transaction['emp_code'])])
 
-                            biotime_transaction_obj.create({
-                                "server_id": server.id,
-                                "punch_state": str(transaction['punch_state']),
-                                "verify_type": str(transaction['verify_type']),
-                                "punch_time": punch_time,
-                                "employee_id": employee.id if employee else False,
-                                "employee_code": transaction['emp_code']
-                            })
+                                biotime_transaction_obj.create({
+                                    "server_id": server.id,
+                                    "punch_state": str(transaction['punch_state']),
+                                    "verify_type": str(transaction['verify_type']),
+                                    "punch_time": punch_time,
+                                    "employee_id": employee.id if employee else False,
+                                    "employee_code": transaction['emp_code']
+                                })
 
                         return {
                             'type': 'ir.actions.client',
@@ -343,7 +391,7 @@ class BiotimeServer(models.Model):
         }
 
     # TODO: Recheck algo and verify code
-    def download_generate_attendances(self):
+    def download_generate_attendances(self, req_params={}):
         _logger.info(
             "++++++++++++ Cron job 'download_generate_attendances' executed ++++++++++++++++++++++")
 
@@ -351,10 +399,10 @@ class BiotimeServer(models.Model):
         biotime_transaction_obj = self.env['biotime.transaction']
         local_tz = pytz.timezone(self.env.user.partner_id.tz or 'GMT')
 
-        biotime_transaction_obj.search([]).unlink()
+        # biotime_transaction_obj.search([]).unlink()
 
         for server in self:
-            biotime = Biotime(server.server_ip, server.server_port)
+            biotime = Biotime(ip=server.server_ip, port=server.server_port)
             server_conn = biotime.test_connection()
             if server_conn:
                 token_res = biotime.get_jwt_token(
@@ -364,6 +412,7 @@ class BiotimeServer(models.Model):
                     transaction_list = biotime.get_transactions()
                     if isinstance(transaction_list, list):
                         for transaction in transaction_list:
+                            
                             # Creating transaction record
                             punch_time = fields.Datetime.to_datetime(
                                 transaction['punch_time'])
@@ -379,26 +428,27 @@ class BiotimeServer(models.Model):
                             # punch_time = fields.Datetime.to_string(punch_time)
                             punch_time = fields.Datetime.to_datetime(
                                 punch_time)
+                            
+                            if not biotime_transaction_obj.search([('employee_code', '=', transaction['emp_code']), ('punch_time', '=', punch_time)]):
+                                employee = employee_obj.search(
+                                    [('biotime_code', '=', transaction['emp_code'])])
 
-                            employee = employee_obj.search(
-                                [('biotime_code', '=', transaction['emp_code'])])
+                                biotime_transaction_obj.create({
+                                    "server_id": server.id,
+                                    "punch_state": str(transaction['punch_state']),
+                                    "verify_type": str(transaction['verify_type']),
+                                    "punch_time": punch_time,
+                                    "employee_id": employee.id if employee else False,
+                                    "employee_code": transaction['emp_code']
+                                })
 
-                            biotime_transaction_obj.create({
-                                "server_id": server.id,
-                                "punch_state": str(transaction['punch_state']),
-                                "verify_type": str(transaction['verify_type']),
-                                "punch_time": punch_time,
-                                "employee_id": employee.id if employee else False,
-                                "employee_code": transaction['emp_code']
-                            })
+                                # Get the puch type and the according shift line
+                                punch_type, shift_line = self._get_punch_type(punch_time,
+                                                                            employee.biotime_shift_id.biotime_shift_lines)
 
-                            # Get the puch type and the according shift line
-                            punch_type, shift_line = self._get_punch_type(punch_time,
-                                                                          employee.biotime_shift_id.biotime_shift_lines)
-
-                            # Generate attendance
-                            self._handle_attendance_creation(
-                                employee, punch_type, punch_time, shift_line)
+                                # Generate attendance
+                                self._handle_attendance_creation(
+                                    employee, punch_type, punch_time, shift_line)
 
                         return {
                             'type': 'ir.actions.client',

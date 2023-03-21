@@ -6,6 +6,11 @@
         <field name="model">hr.employee</field>
         <field name="inherit_id" ref="hr.view_employee_form" />
         <field name="arch" type="xml">
+
+            <xpath expr="//header" position="inside">
+                <button name="upload_to_biotime" type="object" string="Upload to biotime" class="oe_highlight" />
+            </xpath>
+
             <xpath expr="//group[@name='identification_group']" position="after">
                 <group name="biotime_info" string="Info Biotime">
                     <field name="biotime_shift_id" />

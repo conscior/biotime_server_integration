@@ -2,6 +2,7 @@ from socket import socket, AF_INET, SOCK_STREAM
 import requests as req
 
 from typing import Union
+from pprint import pprint
 
 
 class Biotime(object):
@@ -9,7 +10,7 @@ class Biotime(object):
     Biotime main class
     """
 
-    def __init__(self, ip, port, jwt_token="", timeout=60):
+    def __init__(self, ip, port, jwt_token="", timeout=60, req_params={}):
         """
         Construct a new 'Biotime' object.
         :param ip: server's IP address
@@ -21,8 +22,9 @@ class Biotime(object):
         self._timout = timeout
         self._jwt_token = jwt_token
         self._base_url = 'http://' + ip + ":" + port
+        self.req_params = req_params
 
-    def _handle_biotime_data_fetch(self, res: req.Response, headers: dict, req_params) -> list:
+    def _handle_biotime_data_fetch(self, res: req.Response, headers: dict) -> list:
         """
         Used to fetch the whole dataset from a biotime API.
         Biotime limits the number of record sent from it's API (Seems like a pagination system).
@@ -31,20 +33,25 @@ class Biotime(object):
 
         :param res: Response of the initial request
         :param headers: Headers of the initial request
-        :param req_params: Parameters of the initial request
         """
         data = []
         while True:
+            res.raise_for_status()
+            pprint(res.status_code)
             json_res = False
             if res.status_code == 200:
                 json_res = res.json()
+                pprint(len(json_res['data']))
+                pprint(json_res)
                 if json_res['data'] and isinstance(json_res['data'], list):
                     data = data + json_res['data']
                 if json_res['next']:
                     url = json_res['next']
-                    res = req.get(url, headers=headers, params=req_params)
+                    res = req.get(url, headers=headers)
                 else:
                     break
+            else:
+                break
         return data
 
     def test_connection(self) -> bool:
@@ -79,21 +86,22 @@ class Biotime(object):
         uri = '/personnel/api/employees/'
         url = self._base_url + uri
         headers = {"Content-Type": "application/json",
-                   f"Authorization": "JWT {self._jwt_token}"}
+                   "Authorization": f"JWT {self._jwt_token}"}
 
-        res = req.get(url, headers, params=req_params)
+        res = req.get(url, params=req_params, headers=headers)
 
-        employees_data = self._handle_biotime_data_fetch(
-            res, headers, req_params)
+        employees_data = self._handle_biotime_data_fetch(res, headers)
         return employees_data
 
-    def create_employee(self, req_body) -> bool:
+    def create_employee(self, data) -> bool:
         uri = '/personnel/api/employees/'
         url = self._base_url + uri
         headers = {"Content-Type": "application/json",
-                   f"Authorization": "JWT {self._jwt_token}"}
+                   "Authorization": f"JWT {self._jwt_token}"}
 
-        res = req.post(url, headers, data=req_body)
+        print('request data : ###########################', str(data))
+
+        res = req.post(url, headers=headers, data=data)
 
         if res.status_code == 200:
             return True
@@ -107,15 +115,45 @@ class Biotime(object):
         """
         uri = '/iclock/api/transactions/'
         url = self._base_url + uri
-        custom_headers = {"Content-Type": "application/json",
-                          f"Authorization": "JWT {self._jwt_token}"}
-        res = req.get(url, params=req_params, headers=custom_headers)
+        # req_params = {'page_size': '10000', 'start_time': '2023-02-01 00:00:00', 'end_time': '2023-02-28 23:59:59'}
+        # req_params = {'page_size': '4'}
+        headers = {"Content-Type": "application/json",
+                   "Authorization": f"JWT {self._jwt_token}"}
+        res = req.get(url, params=req_params, headers=headers)
 
-        transactions_data = self._handle_biotime_data_fetch(
-            res, custom_headers, req_params)
+        res.raise_for_status()
 
+        # transactions_data = []
+        # print('##################################    First Req ###############################################')
+        # pprint(res.status_code)
+        # pprint(res.content)
+        # if res.status_code != 204:
+        #     res_json = res.json()
+        #     pprint(res_json)
+        #     transactions_data = transactions_data + res_json['data']
+        #     if res_json['next']:
+        #         sec_res = req.get(res_json['next'], headers=headers)
+        #         print('##################################    Second Req ###############################################')
+        #         sec_res.raise_for_status()
+        #         pprint(sec_res.status_code)
+        #         pprint(sec_res.content)
+        #         # pprint(sec_res.status_code)
+        #     if transactions_data:
+        #     # Sort the transaction by punch_time (Works on strings because punch_time follows the Y/M/D H:M:S format)
+        #         sorted_transactions_data = sorted(
+        #             transactions_data, key=lambda t: t['punch_time'])
+        #         return sorted_transactions_data
+        #     else:
+        #         return []
+
+        # print('req_params #####################' , str(req_params))
+
+
+        transactions_data = self._handle_biotime_data_fetch(res, headers)
+        pprint(transactions_data)
+        pprint(len(transactions_data))
         if transactions_data:
-            # Sort the transaction by punch_time (Works on strings because punch_time follows the Y/M/D H:M!S format)
+            # Sort the transaction by punch_time (Works on strings because punch_time follows the Y/M/D H:M:S format)
             sorted_transactions_data = sorted(
                 transactions_data, key=lambda t: t['punch_time'])
             return sorted_transactions_data

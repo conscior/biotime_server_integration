@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="biotime_manager_menu" parent="hr_attendance.menu_hr_attendance_root" sequence="50" name="Biotime Manager" />
+
+    <menuitem id="biotime_server_menu" parent="biotime_manager_menu"  name="Server Configuration" action="biotime_server_action" sequence="1"/>
+    <menuitem id="biotime_shift_menu" parent="biotime_manager_menu" name="Shifts" action="biotime_shift_action" sequence="1" />
+    <menuitem id="biotime_transaction_menu" parent="biotime_manager_menu"  name="Transactions" action="biotime_transaction_action" sequence="1"/>
+
+    <menuitem id="biotime_get_transactions_wizard" name="Download transactions" sequence="15" parent="biotime_manager_menu" action="biotime_transaction_wizard_action"/>
+</odoo>

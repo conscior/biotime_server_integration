@@ -46,6 +46,4 @@
         <field name="res_model">biotime.transaction</field>
         <field name="view_mode">tree,form</field>
     </record>
-
-    <menuitem id="biotime_transaction_menu" parent="biotime_manager_menu"  name="Transactions" action="biotime_transaction_action" sequence="1"/>
 </odoo>
